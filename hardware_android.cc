@@ -48,9 +48,12 @@ const char kAndroidRecoveryPowerwashCommand[] =
 // Write a recovery command line |message| to the BCB. The arguments to recovery
 // must be separated by '\n'. An empty string will erase the BCB.
 bool WriteBootloaderRecoveryMessage(const string& message) {
-  base::FilePath misc_device;
-  if (!utils::DeviceForMountPoint("/misc", &misc_device))
-    return false;
+  base::FilePath update_device;
+  string mount_point = "/misc";
+  if (!utils::DeviceForMountPoint(mount_point, &update_device))
+    mount_point = "/cache";
+    if (!utils::DeviceForMountPoint(mount_point, &update_device))
+      return false;
 
   // Setup a bootloader_message with just the command and recovery fields set.
   bootloader_message boot = {};
@@ -62,9 +65,9 @@ bool WriteBootloaderRecoveryMessage(const string& message) {
   }
 
   int fd =
-      HANDLE_EINTR(open(misc_device.value().c_str(), O_WRONLY | O_SYNC, 0600));
+      HANDLE_EINTR(open(update_device.value().c_str(), O_WRONLY | O_SYNC, 0600));
   if (fd < 0) {
-    PLOG(ERROR) << "Opening misc";
+    PLOG(ERROR) << "Opening " + mount_point;
     return false;
   }
   ScopedFdCloser fd_closer(&fd);
@@ -73,7 +76,7 @@ bool WriteBootloaderRecoveryMessage(const string& message) {
   size_t boot_size =
       offsetof(bootloader_message, recovery) + sizeof(boot.recovery);
   if (!utils::WriteAll(fd, &boot, boot_size)) {
-    PLOG(ERROR) << "Writing recovery command to misc";
+    PLOG(ERROR) << "Writing recovery command to " + mount_point;
     return false;
   }
   return true;

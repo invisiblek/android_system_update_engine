@@ -98,11 +98,11 @@ bool BootControlAndroid::GetPartitionDevice(const string& partition_name,
   // doesn't list every slot partition (it uses the slotselect option
   // to mask the suffix).
   //
-  // We can however assume that there's an entry for the /misc mount
-  // point and use that to get the device file for the misc
+  // We can however assume that there's an entry for the /misc or /cache
+  // mount point and use that to get the device file for the misc or cache
   // partition. This helps us locate the disk that |partition_name|
   // resides on. From there we'll assume that a by-name scheme is used
-  // so we can just replace the trailing "misc" by the given
+  // so we can just replace the trailing "misc" or "cache" by the given
   // |partition_name| and suffix corresponding to |slot|, e.g.
   //
   //   /dev/block/platform/soc.0/7824900.sdhci/by-name/misc ->
@@ -110,15 +110,18 @@ bool BootControlAndroid::GetPartitionDevice(const string& partition_name,
   //
   // If needed, it's possible to relax the by-name assumption in the
   // future by trawling /sys/block looking for the appropriate sibling
-  // of misc and then finding an entry in /dev matching the sysfs
+  // of misc or cache and then finding an entry in /dev matching the sysfs
   // entry.
 
-  base::FilePath misc_device;
-  if (!utils::DeviceForMountPoint("/misc", &misc_device))
-    return false;
+  base::FilePath update_device;
+  string mount_point = "/misc";
+  if (!utils::DeviceForMountPoint(mount_point, &update_device))
+    mount_point = "/cache";
+    if (!utils::DeviceForMountPoint(mount_point, &update_device))
+      return false;
 
-  if (!utils::IsSymlink(misc_device.value().c_str())) {
-    LOG(ERROR) << "Device file " << misc_device.value() << " for /misc "
+  if (!utils::IsSymlink(update_device.value().c_str())) {
+    LOG(ERROR) << "Device file " << update_device.value() << " for " + mount_point
                << "is not a symlink.";
     return false;
   }
@@ -130,7 +133,7 @@ bool BootControlAndroid::GetPartitionDevice(const string& partition_name,
     return false;
   }
 
-  base::FilePath path = misc_device.DirName().Append(partition_name + suffix);
+  base::FilePath path = update_device.DirName().Append(partition_name + suffix);
   if (!base::PathExists(path)) {
     LOG(ERROR) << "Device file " << path.value() << " does not exist.";
     return false;
