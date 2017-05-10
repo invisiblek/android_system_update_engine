@@ -133,6 +133,13 @@ void PostinstallRunnerAction::PerformPartitionPostinstall() {
   }
 
 #ifdef __ANDROID__
+  // Run backuptool script
+  utils::MountFilesystem(mountable_device, fs_mount_dir_, 0,
+                         partition.filesystem_type, "rw");
+  int i = 0;
+  i = system("/postinstall/system/bin/lineage_postinstall.sh");
+  utils::UnmountFilesystem(fs_mount_dir_);
+
   // In Chromium OS, the postinstall step is allowed to write to the block
   // device on the target image, so we don't mark it as read-only and should
   // be read-write since we just wrote to it during the update.
