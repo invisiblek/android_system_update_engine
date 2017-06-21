@@ -138,6 +138,9 @@ bool InitializePartitionInfo(const PartitionConfig& partition,
 bool CompareAopsByDestination(AnnotatedOperation first_aop,
                               AnnotatedOperation second_aop);
 
+// Returns the max number of threads to process the files(chunks) in parallel.
+size_t GetMaxThreads();
+
 }  // namespace diff_utils
 
 }  // namespace chromeos_update_engine
