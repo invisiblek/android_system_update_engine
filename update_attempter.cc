@@ -1063,7 +1063,6 @@ void UpdateAttempter::ActionCompleted(ActionProcessor* processor,
     new_version_ = plan.version;
     new_payload_size_ = plan.payload_size;
     SetupDownload();
-    cpu_limiter_.StartLimiter();
     SetStatusAndNotify(UpdateStatus::UPDATE_AVAILABLE);
   } else if (type == DownloadAction::StaticType()) {
     SetStatusAndNotify(UpdateStatus::FINALIZING);
